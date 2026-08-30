@@ -62,6 +62,12 @@ public class GameManager {
         this.autoCounter = 0;
     }
 
+    public void reload() {
+        this.autoEnabled = plugin.getConfig().getBoolean("settings.auto-enabled", false);
+        this.autoInterval = plugin.getConfig().getInt("settings.auto-interval", 30);
+        this.autoCounter = 0;
+    }
+
     private void startAutoTimer() {
         autoTask = new BukkitRunnable() {
             @Override
@@ -96,11 +102,7 @@ public class GameManager {
         Bukkit.broadcastMessage(msg("event.lobby-started"));
         Bukkit.broadcastMessage(msg("event.lobby-time", "%time%", 
             String.valueOf(plugin.getConfig().getInt("settings.lobby-time", 30))));
-        Bukkit.broadcastMessage(msg("event.lobby-auto-join"));
-
-        for (Player p : w.getPlayers()) {
-            addParticipant(p);
-        }
+        Bukkit.broadcastMessage(msg("event.lobby-join-info"));
 
         lobbyTask = new BukkitRunnable() {
             int remaining = plugin.getConfig().getInt("settings.lobby-time", 30);
@@ -124,6 +126,15 @@ public class GameManager {
     private void startCountdown() {
         if (participants.size() < plugin.getConfig().getInt("settings.min-players", 2)) {
             Bukkit.broadcastMessage(msg("event.not-enough-players-cancel"));
+            // Ha nincs eleg jatekos, mindenkit visszateleportalunk a spawnra
+            for (UUID uuid : new ArrayList<>(participants)) {
+                Player p = Bukkit.getPlayer(uuid);
+                if (p != null && p.isOnline()) {
+                    restorePlayer(p);
+                    p.setGlowing(false);
+                    p.teleport(plugin.getSpawnLocation());
+                }
+            }
             resetEvent();
             return;
         }
@@ -229,9 +240,17 @@ public class GameManager {
             savedData.remove(uuid);
         }
 
-        if (holder != null && holder.getUniqueId().equals(uuid)) {
+        boolean wasHolder = holder != null && holder.getUniqueId().equals(uuid);
+        if (wasHolder) {
             holder = null;
-            if (state == GameState.ACTIVE) passToRandom();
+        }
+
+        if (state == GameState.ACTIVE) {
+            if (wasHolder) {
+                passToRandom();
+            } else {
+                checkWin();
+            }
         }
     }
 
@@ -261,19 +280,7 @@ public class GameManager {
     }
 
     public void handleJoin(Player player) {
-        if (state == GameState.LOBBY) {
-            World arenaWorld = null;
-            Location arena = plugin.getArenaLocation();
-            if (arena != null) arenaWorld = arena.getWorld();
-            else arenaWorld = Bukkit.getWorld(plugin.getConfig().getString("settings.world", "world"));
-            
-            if (arenaWorld != null && player.getWorld().equals(arenaWorld)) {
-                if (!participants.contains(player.getUniqueId())) {
-                    addParticipant(player);
-                    Bukkit.broadcastMessage(msg("player.joined-broadcast", "%player%", player.getName()));
-                }
-            }
-        } else if (state == GameState.COUNTDOWN || state == GameState.ACTIVE) {
+        if (state == GameState.COUNTDOWN || state == GameState.ACTIVE) {
             if (eliminated.contains(player.getUniqueId())) {
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     player.setGlowing(false);
@@ -317,18 +324,13 @@ public class GameManager {
             player.sendMessage(msg("player.not-in-event"));
             return;
         }
-        if (state == GameState.LOBBY || state == GameState.COUNTDOWN) {
+        if (state == GameState.LOBBY) {
             removeParticipant(player);
             player.teleport(plugin.getSpawnLocation());
             Bukkit.broadcastMessage(msg("game.player-left", "%player%", player.getName()));
             return;
         }
-        if (state == GameState.ACTIVE) {
-            player.sendMessage(msg("player.left-active"));
-            eliminatePlayer(player, false);
-            Bukkit.broadcastMessage(msg("game.player-eliminated", "%player%", player.getName()));
-            return;
-        }
+        player.sendMessage(msg("player.cannot-leave"));
     }
 
     private void addParticipant(Player p) {
@@ -336,6 +338,10 @@ public class GameManager {
         participants.add(p.getUniqueId());
         saveAndClear(p);
         p.sendMessage(msg("player.joined"));
+        // Nem-adminokat survivalba tesszuk
+        if (!p.hasPermission("hotpotato.start")) {
+            p.setGameMode(GameMode.SURVIVAL);
+        }
     }
 
     public void passPotato(Player from, Player to) {
@@ -397,9 +403,12 @@ public class GameManager {
             resetEvent();
             return;
         }
+        if (alive.size() == 1) {
+            declareWinner(alive.get(0));
+            return;
+        }
         setHolder(alive.get(new Random().nextInt(alive.size())));
         Bukkit.broadcastMessage(msg("game.potato-passed-random"));
-        checkWin();
     }
 
     private void checkWin() {
@@ -411,35 +420,39 @@ public class GameManager {
 
         if (alive.size() <= 1) {
             if (alive.size() == 1) {
-                Player winner = alive.get(0);
-                String rewardType = plugin.getConfig().getString("settings.reward-type", "item");
-
-                if (rewardType.equalsIgnoreCase("command")) {
-                    List<String> commands = plugin.getConfig().getStringList("settings.reward-commands");
-                    for (String cmd : commands) {
-                        String formatted = cmd.replace("%player%", winner.getName());
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), formatted);
-                    }
-                    winner.sendMessage(msg("game.reward-command"));
-                } else {
-                    String rewardMat = plugin.getConfig().getString("settings.reward-material", "DIAMOND_BLOCK");
-                    int rewardAmt = plugin.getConfig().getInt("settings.reward-amount", 5);
-                    Material mat = Material.matchMaterial(rewardMat);
-                    if (mat != null) {
-                        winner.getInventory().addItem(new ItemStack(mat, rewardAmt));
-                    }
-                    winner.sendMessage(msg("game.reward-item"));
-                }
-
-                Bukkit.broadcastMessage(msg("game.winner-announce", "%player%", winner.getName()));
-                restorePlayer(winner);
-                winner.setGlowing(false);
-                winner.teleport(plugin.getSpawnLocation());
+                declareWinner(alive.get(0));
             } else {
                 Bukkit.broadcastMessage(msg("game.no-winner"));
+                resetEvent();
             }
-            resetEvent();
         }
+    }
+
+    private void declareWinner(Player winner) {
+        String rewardType = plugin.getConfig().getString("settings.reward-type", "item");
+
+        if (rewardType.equalsIgnoreCase("command")) {
+            List<String> commands = plugin.getConfig().getStringList("settings.reward-commands");
+            for (String cmd : commands) {
+                String formatted = cmd.replace("%player%", winner.getName());
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), formatted);
+            }
+            winner.sendMessage(msg("game.reward-command"));
+        } else {
+            String rewardMat = plugin.getConfig().getString("settings.reward-material", "DIAMOND_BLOCK");
+            int rewardAmt = plugin.getConfig().getInt("settings.reward-amount", 5);
+            Material mat = Material.matchMaterial(rewardMat);
+            if (mat != null) {
+                winner.getInventory().addItem(new ItemStack(mat, rewardAmt));
+            }
+            winner.sendMessage(msg("game.reward-item"));
+        }
+
+        Bukkit.broadcastMessage(msg("game.winner-announce", "%player%", winner.getName()));
+        restorePlayer(winner);
+        winner.setGlowing(false);
+        winner.teleport(plugin.getSpawnLocation());
+        resetEvent();
     }
 
     public void stopEvent() {
