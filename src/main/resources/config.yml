@@ -35,7 +35,14 @@ settings:
     z: 0.0
     yaw: 0.0
     pitch: 0.0
-
+    
+command-whitelist:
+  - "msg"
+  - "tell"
+  - "r"
+  - "reply"
+  - "help"
+  
 messages:
   prefix: "&a&l[HOT POTATO] &r"
   
