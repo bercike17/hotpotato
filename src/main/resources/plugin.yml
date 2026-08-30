@@ -1,16 +1,33 @@
 name: HotPotatoEvent
 version: '1.0'
 main: hu.hotpotato.HotPotato
-api-version: '1.18'
+api-version: '1.20'
 author: YourName
 
 commands:
   hotpotato:
     description: Hot Potato event iranyitasa
-    usage: /hotpotato <start|stop|auto|setspawn|status|join|leave>
+    usage: /hotpotato <start|stop|auto|setspawn|setarena|status|join|leave|reload>
 
 permissions:
-  hotpotato.admin:
+  hotpotato.start:
     default: op
-  hotpotato.player:
+    description: Event inditasa
+  hotpotato.stop:
+    default: op
+    description: Event leallitasa
+  hotpotato.auto:
+    default: op
+    description: Automatikus inditas beallitasa
+  hotpotato.setspawn:
+    default: op
+    description: Spawn pozicio beallitasa
+  hotpotato.setarena:
+    default: op
+    description: Arena pozicio beallitasa
+  hotpotato.reload:
+    default: op
+    description: Config ujratoltese
+  hotpotato.status:
     default: true
+    description: Event statusz lekerdezese
