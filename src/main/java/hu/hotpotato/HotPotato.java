@@ -145,21 +145,27 @@ public class HotPotato extends JavaPlugin {
         }
         
         String sub = args[0].toLowerCase();
-        boolean isPlayerCmd = sub.equals("join") || sub.equals("leave");
-        
-        if (!isPlayerCmd && !sender.hasPermission("hotpotato.admin")) {
-            sender.sendMessage(getMsg("admin.no-permission"));
-            return true;
-        }
         
         switch (sub) {
             case "start":
+                if (!sender.hasPermission("hotpotato.start")) {
+                    sender.sendMessage(getMsg("admin.no-permission"));
+                    return true;
+                }
                 gameManager.startEvent();
                 break;
             case "stop":
+                if (!sender.hasPermission("hotpotato.stop")) {
+                    sender.sendMessage(getMsg("admin.no-permission"));
+                    return true;
+                }
                 gameManager.stopEvent();
                 break;
             case "auto":
+                if (!sender.hasPermission("hotpotato.auto")) {
+                    sender.sendMessage(getMsg("admin.no-permission"));
+                    return true;
+                }
                 if (args.length < 2) {
                     sender.sendMessage(ChatColor.YELLOW + "Hasznalat: /hotpotato auto <on|off|interval|status>");
                     return true;
@@ -167,6 +173,10 @@ public class HotPotato extends JavaPlugin {
                 handleAuto(sender, args);
                 break;
             case "setspawn":
+                if (!sender.hasPermission("hotpotato.setspawn")) {
+                    sender.sendMessage(getMsg("admin.no-permission"));
+                    return true;
+                }
                 if (!(sender instanceof Player p)) {
                     sender.sendMessage(getMsg("admin.not-player"));
                     return true;
@@ -175,6 +185,10 @@ public class HotPotato extends JavaPlugin {
                 sender.sendMessage(getMsg("admin.spawn-set"));
                 break;
             case "setarena":
+                if (!sender.hasPermission("hotpotato.setarena")) {
+                    sender.sendMessage(getMsg("admin.no-permission"));
+                    return true;
+                }
                 if (!(sender instanceof Player p)) {
                     sender.sendMessage(getMsg("admin.not-player"));
                     return true;
@@ -183,7 +197,22 @@ public class HotPotato extends JavaPlugin {
                 sender.sendMessage(getMsg("admin.arena-set"));
                 break;
             case "status":
+                if (!sender.hasPermission("hotpotato.status")) {
+                    sender.sendMessage(getMsg("admin.no-permission"));
+                    return true;
+                }
                 gameManager.sendStatus(sender);
+                break;
+            case "reload":
+                if (!sender.hasPermission("hotpotato.reload")) {
+                    sender.sendMessage(getMsg("admin.no-permission"));
+                    return true;
+                }
+                reloadConfig();
+                loadSpawn();
+                loadArena();
+                gameManager.reload();
+                sender.sendMessage(getMsg("admin.reload-success"));
                 break;
             case "join":
                 if (!(sender instanceof Player p)) {
@@ -248,6 +277,7 @@ public class HotPotato extends JavaPlugin {
         sender.sendMessage(getMsg("help.setarena"));
         sender.sendMessage(getMsg("help.setspawn"));
         sender.sendMessage(getMsg("help.status"));
+        sender.sendMessage(getMsg("help.reload"));
         sender.sendMessage(getMsg("help.join"));
         sender.sendMessage(getMsg("help.leave"));
     }
