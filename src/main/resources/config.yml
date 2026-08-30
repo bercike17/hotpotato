@@ -1,0 +1,111 @@
+settings:
+  min-explosion-time: 30
+  max-explosion-time: 120
+  auto-interval: 30
+  auto-enabled: false
+  min-players: 2
+  world: world
+  
+  lobby-time: 30
+  countdown-time: 10
+  
+  glow-enabled: true
+  
+  reward-type: command
+  reward-material: DIAMOND_BLOCK
+  reward-amount: 5
+  
+  reward-commands:
+    - "eco give %player% 5000"
+    - "give %player% diamond 10"
+    - "say Gratulalok %player% a Hot Potato gyozelmehez!"
+
+  arena:
+    world: world
+    x: 0.0
+    y: 64.0
+    z: 0.0
+    yaw: 0.0
+    pitch: 0.0
+
+  spawn:
+    world: world
+    x: 0.0
+    y: 64.0
+    z: 0.0
+    yaw: 0.0
+    pitch: 0.0
+
+messages:
+  prefix: "&a&l[HOT POTATO] &r"
+  
+  event:
+    lobby-started: "&eAz event lobby-ja elindult!"
+    lobby-time: "&e%time% &emásodpercig lehet csatlakozni!"
+    lobby-auto-join: "&eA vilagban levo jatekosok automatikusan csatlakoztak!"
+    lobby-ending: "&eA lobby vege: &c%remaining% &emásodperc"
+    countdown-start: "&eA jatek hamarosan indul!"
+    countdown-time: "&eVisszaszamlalas: &c%time% &emásodperc"
+    countdown-number: "&c%number%..."
+    game-started: "&eA jatek ELINDULT!"
+    explosion-time: "&eA krumpli &c%time% &emásodpercen belul felrobbanhat!"
+    stopped: "&cAz event leallitva!"
+    auto-start: "&eAutomatikus event indul!"
+    not-enough-players-cancel: "&cNincs eleg jatekos, az event torolve!"
+    not-enough-players: "&cNincs eleg jatekos!"
+    min-players: "&cLegalabb 2 jatekos kell!"
+
+  game:
+    timer-holder: "&c%player% &enal van a krumpli! &7(%current%/%max%s)"
+    player-exploded: "&c%player% &4felrobbant!"
+    potato-passed-random: "&eA krumpli at lett adva valaki masnak!"
+    potato-passed-direct: "&aAtadtad a krumplit &e%target%&a-nak!"
+    potato-received: "&c&lFIGYELEM! &e%player% &eadta neked a krumplit!"
+    you-are-holder: "&c&lFIGYELEM! &eTe vagy a forro krumpli tulajdonosa! Add tovabb!"
+    no-winner: "&cSenki sem nyert..."
+    winner-announce: "&a%player% &enyerte az eventet!"
+    reward-command: "&aKaptal jutalmat! (Parancsok vegrehajtva)"
+    reward-item: "&aKaptal jutalmat!"
+    eliminated: "&cKiestel a jatekbol! Visszateleportalva a spawnra."
+    eliminated-lobby: "&cKiestel a jatekbol (lobby)."
+    player-eliminated: "&c%player% &ekiesett az eventbol!"
+    player-left: "&c%player% &ekilepett az eventbol."
+
+  player:
+    joined: "&aCsatlakoztal a Hot Potato eventhez!"
+    joined-broadcast: "&a%player% &ecsatlakozott az eventhez!"
+    left-active: "&cKileptel az eventbol!"
+    no-event-running: "&cJelenleg nincs futo event!"
+    already-joined: "&cMar csatlakoztal az eventhez!"
+    wrong-world: "&cA megadott vilagban kell lenned a csatlakozashoz!"
+    lobby-closed: "&cMar nem lehet csatlakozni, a jatek hamarosan indul!"
+    game-running: "&cA jatek mar fut, nem lehet csatlakozni!"
+    not-in-event: "&cNem vagy eventben!"
+    cannot-drop: "&cNem dobhod el a forro krumplit!"
+    cannot-move: "&cNem teheted el a forro krumplit!"
+
+  admin:
+    no-permission: "&cNincs jogod ehhez a parancshoz!"
+    not-player: "&cCsak jatekos tudja ezt!"
+    not-player-join: "&cCsak jatekos tud csatlakozni!"
+    not-player-leave: "&cCsak jatekos tud kilepni!"
+    spawn-set: "&aSpawn (visszateresi) pozicio beallitva!"
+    arena-set: "&aArena (jatek) pozicio beallitva!"
+    auto-on: "&aAutomatikus inditas BEKAPCSOLVA!"
+    auto-off: "&cAutomatikus inditas KIKAPCSOLVA!"
+    auto-interval: "&aIntervallum: &e%interval% &aperc"
+    auto-invalid: "&cErvenyes szam kell (minimum 1)!"
+    auto-status-header: "&6Auto statusz:"
+    auto-status-next: "&eKovetkezo inditasig: &c%remaining% &aperc"
+    world-not-found: "&cA beallitott vilag nem talalhato!"
+
+  help:
+    header: "&6=== Hot Potato ==="
+    start: "&e/hotpotato start &7- Event inditasa"
+    stop: "&e/hotpotato stop &7- Event leallitasa"
+    auto: "&e/hotpotato auto <on|off|interval|status> &7- Auto inditas"
+    setarena: "&e/hotpotato setarena &7- Arena (palya) beallitasa"
+    setspawn: "&e/hotpotato setspawn &7- Spawn (visszateres) beallitasa"
+    status: "&e/hotpotato status &7- Allapot"
+    join: "&e/hotpotato join &7- Csatlakozas az eventhez"
+    leave: "&e/hotpotato leave &7- Kilepes az eventbol"

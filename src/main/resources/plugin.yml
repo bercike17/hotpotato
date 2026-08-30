@@ -1,0 +1,16 @@
+name: HotPotatoEvent
+version: '1.0'
+main: hu.hotpotato.HotPotato
+api-version: '1.18'
+author: YourName
+
+commands:
+  hotpotato:
+    description: Hot Potato event iranyitasa
+    usage: /hotpotato <start|stop|auto|setspawn|status|join|leave>
+
+permissions:
+  hotpotato.admin:
+    default: op
+  hotpotato.player:
+    default: true
