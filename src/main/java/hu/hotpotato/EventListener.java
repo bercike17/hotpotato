@@ -1,16 +1,22 @@
 package hu.hotpotato;
 
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
+
+import java.util.List;
 
 public class EventListener implements Listener {
     private final HotPotato plugin;
@@ -64,6 +70,23 @@ public class EventListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onDamage(EntityDamageByEntityEvent e) {
+        if (game.getState() != GameManager.GameState.ACTIVE) return;
+        if (!(e.getEntity() instanceof Player victim)) return;
+        if (!(e.getDamager() instanceof Player attacker)) return;
+        if (!game.isParticipant(victim) || !game.isParticipant(attacker)) return;
+        
+        if (game.getHolder() == null || !game.getHolder().getUniqueId().equals(attacker.getUniqueId())) {
+            e.setCancelled(true);
+            attacker.sendMessage(plugin.getMsg("player.cannot-hit"));
+            return;
+        }
+        
+        e.setCancelled(false);
+        e.setDamage(0);
+    }
+
     @EventHandler
     public void onDrop(PlayerDropItemEvent e) {
         if (game.getState() != GameManager.GameState.ACTIVE) return;
@@ -87,6 +110,46 @@ public class EventListener implements Listener {
                 e.setCancelled(true);
                 e.getWhoClicked().sendMessage(plugin.getMsg("player.cannot-move"));
             }
+        }
+    }
+
+    @EventHandler
+    public void onCommand(PlayerCommandPreprocessEvent e) {
+        Player player = e.getPlayer();
+
+        // Csak az eventben levo jatekosokra vonatkozik
+        if (!game.isParticipant(player)) return;
+
+        // Adminoknak (akiknek van hotpotato.start joguk) szabad minden
+        if (player.hasPermission("hotpotato.start")) return;
+
+        String message = e.getMessage();
+        String[] args = message.split(" ");
+        if (args.length == 0) return;
+
+        String cmd = args[0].toLowerCase();
+
+        // Hotpotato parancsok mindig menjenek
+        if (cmd.startsWith("/hotpotato")) return;
+
+        // Whitelist ellenorzese
+        List<String> whitelist = plugin.getConfig().getStringList("command-whitelist");
+        boolean allowed = false;
+
+        for (String allowedCmd : whitelist) {
+            String check = allowedCmd.toLowerCase();
+            if (!check.startsWith("/")) {
+                check = "/" + check;
+            }
+            if (cmd.equals(check)) {
+                allowed = true;
+                break;
+            }
+        }
+
+        if (!allowed) {
+            e.setCancelled(true);
+            player.sendMessage(ChatColor.RED + "Ezt a parancsot nem hasznalhatod az event alatt!");
         }
     }
 }
