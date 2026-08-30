@@ -126,7 +126,6 @@ public class GameManager {
     private void startCountdown() {
         if (participants.size() < plugin.getConfig().getInt("settings.min-players", 2)) {
             Bukkit.broadcastMessage(msg("event.not-enough-players-cancel"));
-            // Ha nincs eleg jatekos, mindenkit visszateleportalunk a spawnra
             for (UUID uuid : new ArrayList<>(participants)) {
                 Player p = Bukkit.getPlayer(uuid);
                 if (p != null && p.isOnline()) {
@@ -220,8 +219,11 @@ public class GameManager {
         }
         Player victim = holder;
         Location loc = victim.getLocation();
-        loc.getWorld().createExplosion(loc, 3.0f, false, false);
+        
+        // 0.0f power = vizualis robbanas, nem sebez masokat!
+        loc.getWorld().createExplosion(loc, 0.0f, false, false);
         loc.getWorld().strikeLightningEffect(loc);
+        
         Bukkit.broadcastMessage(msg("game.player-exploded", "%player%", victim.getName()));
         eliminatePlayer(victim, false);
     }
@@ -338,7 +340,6 @@ public class GameManager {
         participants.add(p.getUniqueId());
         saveAndClear(p);
         p.sendMessage(msg("player.joined"));
-        // Nem-adminokat survivalba tesszuk
         if (!p.hasPermission("hotpotato.start")) {
             p.setGameMode(GameMode.SURVIVAL);
         }
@@ -407,8 +408,16 @@ public class GameManager {
             declareWinner(alive.get(0));
             return;
         }
+        
+        // UJ KOR INDUL - uj idozites!
+        timer = 0;
+        int min = plugin.getConfig().getInt("settings.min-explosion-time", 30);
+        int max = plugin.getConfig().getInt("settings.max-explosion-time", 120);
+        explodeTime = new Random().nextInt(max - min + 1) + min;
+        
         setHolder(alive.get(new Random().nextInt(alive.size())));
         Bukkit.broadcastMessage(msg("game.potato-passed-random"));
+        Bukkit.broadcastMessage(msg("event.explosion-time", "%time%", String.valueOf(explodeTime)));
     }
 
     private void checkWin() {
